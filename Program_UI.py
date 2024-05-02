@@ -99,7 +99,3 @@ class UI:
 
     def run(self):
         self.window.mainloop()
-
-
-Ui = UI()
-Ui.run()
