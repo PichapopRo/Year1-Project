@@ -1,0 +1,20 @@
+# Files to NOT commit to a git repository
+__pycache__
+*.py[cod]
+build/
+db.sqlite3
+venv/
+env/
+
+# code coverage
+.coverage
+htmlcov/
+/coverage
+.mypy_cache
+
+.idea/
+*.iml
+.project
+.pydevproject
+.vscode/
+.DS_Store
