@@ -1,4 +1,5 @@
 from Program_UI import *
 
-Ui = UI()
+window = tk.Tk()
+Ui = UI(window)
 Ui.run()

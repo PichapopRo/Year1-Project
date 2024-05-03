@@ -245,7 +245,3 @@ class UI:
     def run(self):
         self.window.mainloop()
 
-
-window = tk.Tk()
-Ui = UI(window)
-Ui.run()
