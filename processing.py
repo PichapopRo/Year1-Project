@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 gpu_data = pd.read_csv("GPUData.csv").dropna()
 CPU_data = pd.read_csv("CPUData.csv").dropna()
@@ -62,7 +63,10 @@ gpu_data['Series'] = gpu_data['Name'].apply(map_gpu_series)
 def convert_to_thb(price_usd):
     exchange_rate_usd_to_thb = 37.02
     casting = float(price_usd.replace("$", "").replace(" USD", ""))
-    return float(f"{casting * exchange_rate_usd_to_thb:.2f}")
+    casted = float(f"{casting * exchange_rate_usd_to_thb:.2f}")
+    if casted // 0.5 > 1:
+        return math.ceil(casted)
+    return math.floor(casted)
 
 
 def convert_currency_data():
@@ -103,6 +107,9 @@ class Plotting:
 
     def pie_chart(self, attribute):
         pass
+
+
+convert_currency_data()
 
 # test = Plotting()
 # test.histogram(gpu_data, "Price", (10000, 20000))
