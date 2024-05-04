@@ -1,7 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from product_value import *
 
@@ -23,7 +21,6 @@ class UI:
 
     def init_components(self):
         self.window.title('PC Part Picker')
-        self.window.geometry("700x400")
         self.window.rowconfigure(0, weight=1)
         self.window.columnconfigure(0, weight=1)
 
@@ -114,7 +111,7 @@ class UI:
         self.price_range_entry2.grid(row=1, column=3)
         self.price_range_entry2.columnconfigure(3, weight=1)
         self.price_range_entry2.rowconfigure(1, weight=1)
-        # listbox
+        # Tree
         self.product_tree = ttk.Treeview(self.notebook, columns=('Name', 'Price'), height=13)
         self.product_tree.heading('#0', text='Number')
         self.product_tree.heading('Name', text='Name')
@@ -122,7 +119,7 @@ class UI:
         self.product_tree.column('#0', width=60)
         self.product_tree.column('Name', width=250)
         self.product_tree.column('Price', width=100)
-        self.product_tree.grid(row=1, column=1)
+        self.product_tree.grid(row=1, column=1, padx=10)
         self.product_tree.columnconfigure(1, weight=1)
         self.product_tree.rowconfigure(1, weight=1)
         self.product_tree.bind('<<TreeviewSelect>>', self.on_item_select)
@@ -318,10 +315,10 @@ class UI:
         # graph
         fig, ax = plt.subplots(figsize=(5, 2))
         fig.set_dpi(100)
-        self.canvas = FigureCanvasTkAgg(fig, master=self.graph_sort_frame)
-        self.canvas.get_tk_widget().grid(row=6, column=1, padx=5, sticky='nsew')
-        self.canvas.get_tk_widget().columnconfigure(1, weight=1)
-        self.canvas.get_tk_widget().rowconfigure(6, weight=1)
+        self.graph = FigureCanvasTkAgg(fig, master=self.graph_sort_frame)
+        self.graph.get_tk_widget().grid(row=6, column=1, padx=5, sticky='nsew')
+        self.graph.get_tk_widget().columnconfigure(1, weight=1)
+        self.graph.get_tk_widget().rowconfigure(6, weight=1)
         self.components_type_combobox.bind('<<ComboboxSelected>>', self.load_filter)
         self.compare_combo.bind('<<ComboboxSelected>>')
         self.price_range_entry1.config(state='disabled')
@@ -333,53 +330,58 @@ class UI:
             self.price_range_entry2.config(state='normal')
 
     def plot_handler(self):
-        overall_comparison_checked = self.var.get()
+        try:
+            overall_comparison_checked = self.var.get()
 
-        if overall_comparison_checked == 1:
-            self.graph_type_combo['values'] = ['Histogram', 'Bar Chart']
-        else:
-            if self.product_listbox.size() == 0:
-                messagebox.showerror("Error",
-                                     "Please select at least one product for comparison.")
-                return
+            if overall_comparison_checked == 1:
+                self.graph_type_combo['values'] = ['Histogram', 'Bar Chart']
+            else:
+                if self.product_listbox.size() == 0:
+                    messagebox.showerror("Error",
+                                         "Please select at least one product for comparison.")
+                    return
 
-        selected_graph_type = self.graph_type_combo.get()
+            selected_graph_type = self.graph_type_combo.get()
 
-        if self.graph is not None:
-            self.graph.get_tk_widget().destroy()
+            if self.graph is not None:
+                self.graph.get_tk_widget().destroy()
 
-        fig, ax = plt.subplots(figsize=(4, 2))
-        fig.set_dpi(100)
-        data = self.data_search(self.components_type_combobox.get())
+            fig, ax = plt.subplots(figsize=(5, 2))
+            fig.set_dpi(100)
+            data = self.data_search(self.components_type_combobox.get())
 
-        if selected_graph_type == 'Histogram':
-            # Get the data to plot
-            compare_attribute = self.compare_combo.get()
-            data_to_plot = data[compare_attribute]
+            if selected_graph_type == 'Histogram':
+                # Get the data to plot
+                compare_attribute = self.compare_combo.get()
+                data_to_plot = data[compare_attribute]
 
-            # Plot histogram
-            ax.hist(data_to_plot, bins=5)
-            ax.set_xlabel('Value')
-            ax.set_ylabel('Frequency')
-            ax.set_title('Histogram')
-        elif selected_graph_type == 'Bar Chart':
-            values = []
-            labels = self.product_listbox.get(0, tk.END)
-            for item in labels:
-                for index, row in data.iterrows():
-                    if row['Name'] == item:
-                        values.append(row[self.compare_combo.get()])
+                # Plot histogram
+                ax.hist(data_to_plot, bins=5)
+                ax.set_xlabel('Value')
+                ax.set_ylabel('Frequency')
+                ax.set_title('Histogram')
+            elif selected_graph_type == 'Bar Chart':
+                values = []
+                labels = self.product_listbox.get(0, tk.END)
+                for item in labels:
+                    for index, row in data.iterrows():
+                        if row['Name'] == item:
+                            values.append(row[self.compare_combo.get()])
 
-            ax.bar(labels, values)
-            ax.set_xlabel('Category')
-            ax.set_ylabel('Value')
-            ax.set_title('Bar Chart')
+                ax.bar(labels, values)
+                ax.set_xlabel('Category')
+                ax.set_ylabel('Value')
+                ax.set_title('Bar Chart')
 
-        # Grid the new graph
-        self.graph = FigureCanvasTkAgg(fig, master=self.graph_sort_frame)
-        self.graph.get_tk_widget().grid(row=6, column=1, padx=5)
-        self.graph.get_tk_widget().columnconfigure(1, weight=1)
-        self.graph.get_tk_widget().rowconfigure(6, weight=1)
+            # Grid the new graph
+            self.graph = FigureCanvasTkAgg(fig, master=self.graph_sort_frame)
+            self.graph.get_tk_widget().grid(row=6, column=1, padx=5)
+            self.graph.get_tk_widget().columnconfigure(1, weight=1)
+            self.graph.get_tk_widget().rowconfigure(6, weight=1)
+        except Exception:
+            messagebox.showerror("Error",
+                                 "Please fill in all attribute")
+            return
 
     def select_handler(self):
         self.select_window = tk.Tk()
