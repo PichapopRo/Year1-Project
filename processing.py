@@ -9,16 +9,7 @@ mb_data = pd.read_csv("MotherboardData.csv").dropna()
 hdd_data = pd.read_csv("HDDData.csv").dropna()
 ssd_data = pd.read_csv("SSDData.csv").dropna()
 ram_data = pd.read_csv("RAMData.csv").dropna()
-# gpu_data['Series'] = gpu_data['Name'].apply(lambda x: 'GTX 1060' if 'GTX 1060' in x else )
-# gpu_data['Series'] = gpu_data['Name'].apply(lambda x: 'GTX 1070' if 'GTX 1070' in x else )
-# gpu_data['Series'] = gpu_data['Name'].apply(lambda x: 'GTX 1080' if 'GTX 1080' in x else )
-# gpu_data['Series'] = gpu_data['Name'].apply(lambda x: 'RTX 2060' if 'RTX 2060' in x else )
-# gpu_data['Series'] = gpu_data['Name'].apply(lambda x: 'RTX 2070' if 'RTX 2070' in x else )
-# gpu_data['Series'] = gpu_data['Name'].apply(lambda x: 'RTX 2080' if 'RTX 2080' in x else )
-# gpu_data['Series'] = gpu_data['Name'].apply(lambda x: 'RTX 3060' if 'RTX 3060' in x else )
-# gpu_data['Series'] = gpu_data['Name'].apply(lambda x: 'RTX 3070' if 'RTX 3070' in x else )
-# gpu_data['Series'] = gpu_data['Name'].apply(lambda x: 'RTX 3080' if 'RTX 3080' in x else )
-# gpu_data['Series'] = gpu_data['Name'].apply(lambda x: 'RTX 3090' if 'RTX 3090' in x else )
+
 gpu_series_mapping = {
     'RTX 3060': 'RTX 30 Series',
     'RTX 3070': 'RTX 30 Series',
