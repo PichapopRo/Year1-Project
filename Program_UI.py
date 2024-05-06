@@ -16,8 +16,9 @@ class UI:
         self.previous_price = 0
         self.selected_component = None
         self.selected_price = 0
-        self.selected_components = {}
         self.init_components()
+        self.selected_item = []
+        self.selected_components = {}
 
     def init_components(self):
         self.window.title('PC Part Picker')
@@ -111,7 +112,15 @@ class UI:
         self.price_range_entry2.grid(row=1, column=3)
         self.price_range_entry2.columnconfigure(3, weight=1)
         self.price_range_entry2.rowconfigure(1, weight=1)
-        # Tree
+        # Search box and label
+        self.search_label = tk.Label(self.sort_item_selection_frame, text='Search:')
+        self.search_label.grid(row=0, column=0, padx=5, pady=5)
+
+        self.search_var = tk.StringVar()
+        self.search_entry = tk.Entry(self.sort_item_selection_frame, textvariable=self.search_var)
+        self.search_entry.grid(row=0, column=1, padx=5, pady=5, sticky='ew')
+
+        # Treeview for displaying components
         self.product_tree = ttk.Treeview(self.notebook, columns=('Name', 'Price'), height=13)
         self.product_tree.heading('#0', text='Number')
         self.product_tree.heading('Name', text='Name')
@@ -123,6 +132,25 @@ class UI:
         self.product_tree.columnconfigure(1, weight=1)
         self.product_tree.rowconfigure(1, weight=1)
         self.product_tree.bind('<<TreeviewSelect>>', self.on_item_select)
+        self.search_entry.bind('<KeyRelease>', self.search_items)
+
+    def search_items(self, event=None):
+        search_query = self.search_var.get().lower()
+        if not search_query:
+            return
+        all_items = [(self.product_tree.item(child, 'values'), child) for child in
+                     self.product_tree.get_children()]
+        filtered_items = [(item_values, child) for item_values, child in all_items if
+                          item_values and search_query in item_values[0].lower()]
+        self.product_tree.delete(*self.product_tree.get_children())
+        filtered_items.sort(
+            key=lambda x: x[0][0].lower())
+
+        # Populate the treeview with the filtered and sorted items
+        number = 1
+        for item_values, child in filtered_items:
+            self.product_tree.insert('', 'end', text=f'{number}', values=item_values)
+            number += 1
 
     def build_handler(self):
         pass
@@ -181,25 +209,38 @@ class UI:
             number += 1
         self.selected_button = self.ram_button
 
-    def button_handler(self, handler):
-        self.product_tree.delete(*self.product_tree.get_children())
-        number = 1
-        for index, item in handler['data'].iterrows():
-            self.product_tree.insert('', 'end', text=f'{number}',
-                                     values=(item['Name'], f"{item['Price']} Baht"))
-            number += 1
-
     def on_item_select(self, event):
         selected_item = self.product_tree.item(self.product_tree.selection())['values']
         if selected_item:
             name, price = selected_item
-            price = int(price.split()[0])
-            if name in self.selected_components:
-                self.total_price_value -= self.selected_components[name]
-            self.selected_components[name] = price
+            try:
+                price = int(price.split()[0])
+            except ValueError:
+                return
+
+            # Check if a component of the same category has already been selected
+            category_selected = False
+            components_copy = self.selected_components.copy()  # Create a copy of the dictionary
+            for category, item_price in components_copy.items():
+                if category != name.split()[0]:  # Compare category names
+                    continue
+                category_selected = True
+                self.total_price_value -= item_price  # Subtract the price of the previous component
+                self.selected_components.pop(category)  # Remove the previous component
+
+            # Add the newly selected component
+            self.selected_components[name.split()[0]] = price
             self.total_price_value += price
+
+            # Update the total price label
             self.total_price_label.config(text=f'Total Price: {self.total_price_value} Baht')
+
+            # Update the button label
             self.update_button(self.selected_button, name)
+
+            # If a component of the same category was previously selected, update the button label
+            if category_selected:
+                self.update_button(self.selected_button)
 
     def update_button(self, button, selected_item_name=None):
         if selected_item_name:
@@ -223,7 +264,6 @@ class UI:
         self.price_range_label.columnconfigure(1, weight=1)
         self.price_range_label.rowconfigure(1, weight=1)
 
-
         self.price_range_entry1 = tk.Entry(self.graph_sort_frame, width=10)
         self.price_range_entry1.grid(row=2, column=1, padx=5, pady=1)
         self.price_range_label.columnconfigure(1, weight=1)
@@ -238,7 +278,6 @@ class UI:
         self.price_range_entry2.grid(row=4, column=1, padx=5, pady=1)
         self.price_range_entry2.columnconfigure(1, weight=1)
         self.price_range_entry2.rowconfigure(4, weight=1)
-
 
         # Components type label and combobox
         self.components_type_label = tk.Label(self.graph_sort_frame, text='Select part to compare:')
@@ -386,7 +425,7 @@ class UI:
     def select_handler(self):
         self.select_window = tk.Tk()
         self.select_type_label = tk.Label(self.select_window, text='Select Component')
-        self.select_type_label.pack(side='top',expand=True)
+        self.select_type_label.pack(side='top', expand=True)
 
         # Search box
         self.search_label = tk.Label(self.select_window, text='Search:')
@@ -394,7 +433,7 @@ class UI:
 
         self.search_var = tk.StringVar()
         self.search_entry = tk.Entry(self.select_window, textvariable=self.search_var)
-        self.search_entry.pack(side='top', padx=5, pady=5, fill='x',expand=True)
+        self.search_entry.pack(side='top', padx=5, pady=5, fill='x', expand=True)
 
         # Create the treeview to display the selected items
         self.list_select = ttk.Treeview(self.select_window, columns=('Name', 'Price'), height=10)
@@ -421,38 +460,39 @@ class UI:
                 component_data = ssd_data
             elif selected_component == 'HDD':
                 component_data = hdd_data
-            for index, item in component_data.iterrows():
-                self.list_select.insert('', 'end', text=f'{number}',
-                                        values=(item['Name'], f"{item['Price']} Baht"))
-                number += 1
+            try:
+                for index, item in component_data.iterrows():
+                    self.list_select.insert('', 'end', text=f'{number}',
+                                            values=(item['Name'], f"{item['Price']} Baht"))
+                    number += 1
+            except Exception:
+                messagebox.showerror("Error",
+                                     "Please select part to compare first.")
+                return
 
         def on_select(*args):
             selected_component = self.components_type_combobox.get()
             populate_treeview(selected_component)
 
         on_select()
+
         def search_items(event=None):
-
-            self.list_select.delete(*self.list_select.get_children())
-
-
-            selected_component = self.components_type_combobox.get()
-
-            # Get the data for the selected component
-            if selected_component is not None:
-                component_data = self.data_search(selected_component)
-            else:
-                return
-
             search_query = self.search_var.get().lower()
-            filtered_data = component_data[
-                component_data['Name'].str.lower().str.contains(search_query)]
+            if not search_query:
+                return
+            all_items = [(self.list_select.item(child, 'values'), child) for child in
+                         self.list_select.get_children()]
+            filtered_items = [(item_values, child) for item_values, child in all_items if
+                              item_values and search_query in item_values[0].lower()]
+            self.list_select.delete(*self.list_select.get_children())
+            filtered_items.sort(
+                key=lambda x: x[0][0].lower())
             number = 1
-            for index, item in filtered_data.iterrows():
-                self.list_select.insert('', 'end', text=f'{number}',
-                                        values=(item['Name'], f"{item['Price']} Baht"))
+            for item_values, child in filtered_items:
+                self.list_select.insert('', 'end', text=f'{number}', values=item_values)
                 number += 1
 
+        # Bind the search box to trigger search on key release
         self.search_entry.bind('<KeyRelease>', search_items)
 
         # Bind the search box to filter items when the user types in it
@@ -501,7 +541,7 @@ class UI:
         elif data_type == 'HDD':
             return hdd_data
 
-
     def run(self):
         self.window.mainloop()
+
 
