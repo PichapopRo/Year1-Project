@@ -136,8 +136,6 @@ class UI(tk.Tk):
         self.product_tree.delete(*self.product_tree.get_children())
         filtered_items.sort(
             key=lambda x: x[0][0].lower())
-
-        # Populate the treeview with the filtered and sorted items
         number = 1
         for item_values, child in filtered_items:
             self.product_tree.insert('', 'end', text=f'{number}', values=item_values)
@@ -174,7 +172,6 @@ class UI(tk.Tk):
                 except ValueError:
                     pass
 
-        # Clear the treeview
         self.product_tree.delete(*self.product_tree.get_children())
         number = 1
         for item_text, item_values in filtered_items:
@@ -186,14 +183,9 @@ class UI(tk.Tk):
         build_window = tk.Toplevel()
         build_window.title("Build Details")
 
-        # Create a text widget to display build details
         build_text = tk.Text(build_window, wrap="word", height=20, width=50)
         build_text.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
-
-        # Gather all selected components
         current_row = 0
-
-        # Iterate through each button to extract product name
         for button in [self.cpu_button, self.mb_button, self.gpu_button, self.ram_button,
                        self.ssd_button, self.hdd_button]:
             product_name = button['text']
@@ -209,7 +201,6 @@ class UI(tk.Tk):
                         'Price'].empty else "N/A"
                     break
 
-            # Create a clickable hyperlink for the product page
             if product_page != "N/A":
                 component_link_text = f"{product_name}: {price} Baht - Product Page:"
                 build_text.insert("end", f"{component_link_text}\n")
@@ -219,8 +210,6 @@ class UI(tk.Tk):
                 current_row += 1
             else:
                 build_text.insert("end", f"{product_name}: {price} Baht - Product Page: N/A\n\n")
-
-        # Make the text widget read-only
         build_text.config(state="disabled")
 
     def cpu_handler(self):
@@ -286,25 +275,18 @@ class UI(tk.Tk):
             except ValueError:
                 return
 
-            # Check if a component of the same category has already been selected
             category_selected = False
-            components_copy = self.selected_components.copy()  # Create a copy of the dictionary
+            components_copy = self.selected_components.copy()
             for category, item_price in components_copy.items():
                 if category != name.split()[0]:  # Compare category names
                     continue
                 category_selected = True
-                self.total_price_value -= item_price  # Subtract the price of the previous component
-                self.selected_components.pop(category)  # Remove the previous component
-
-            # Add the newly selected component
+                self.total_price_value -= item_price
+                self.selected_components.pop(category)
             self.selected_components[name.split()[0]] = price
             self.total_price_value += price
-
-            # Update the total price label
             self.total_price_label.config(text=f'Total Price: {self.total_price_value} Baht')
             self.update_button(self.selected_button, name)
-
-            # If a component of the same category was previously selected, update the button label
             if category_selected:
                 self.update_button(self.selected_button)
 
@@ -476,14 +458,8 @@ class UI(tk.Tk):
                      self.list_select.get_children()]
         filtered_items = [(item_values, child) for item_values, child in all_items if
                           item_values and search_query in item_values[0].lower()]
-
-        # Clear the treeview
         self.list_select.delete(*self.list_select.get_children())
-
-        # Sort the filtered items
         filtered_items.sort(key=lambda x: x[0][0].lower())
-
-        # Populate the treeview with the filtered and sorted items
         number = 1
         for item_values, child in filtered_items:
             self.list_select.insert('', 'end', text=f'{number}', values=item_values)
@@ -593,5 +569,3 @@ class UI(tk.Tk):
         self.mainloop()
 
 
-Ui = UI()
-Ui.run()
