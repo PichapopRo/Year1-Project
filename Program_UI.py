@@ -2,13 +2,13 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from product_value import *
-
+import webbrowser
 from processing import *
 
 
-class UI:
-    def __init__(self, window: tk.Tk):
-        self.window = window
+class UI(tk.Tk):
+    def __init__(self):
+        super().__init__()
         self.graph = None
         self.total_price_value = 0
         self.selected_item_name = ""
@@ -19,120 +19,109 @@ class UI:
         self.init_components()
         self.selected_item = []
         self.selected_components = {}
+        self.component_data = {
+            'CPU': CPU_data,
+            'Motherboard': mb_data,
+            'GPU': gpu_data,
+            'RAM': ram_data,
+            'SSD': ssd_data,
+            'HDD': hdd_data
+        }
 
     def init_components(self):
-        self.window.title('PC Part Picker')
-        self.window.rowconfigure(0, weight=1)
-        self.window.columnconfigure(0, weight=1)
+        self.title('PC Part Picker')
 
-        # Create Menu Bar
-        menubar = tk.Menu(self.window)
+        # Menu Bar
+        menubar = tk.Menu(self)
         menubar.add_cascade(label="Exit", command=self.exit_program)
-        self.window.config(menu=menubar)
+        self.config(menu=menubar)
 
-        # Create Notebook
-        self.notebook = ttk.Notebook(self.window, width=700, height=400)
+        # Notebook
+        self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill='both', expand=True)
 
         # First Page
         self.first_page = ttk.Frame(self.notebook)
         self.notebook.add(self.first_page, text='Build PC')
         self.init_first_page()
-
         self.init_second_page()
 
     def exit_program(self):
-        self.window.quit()
+        self.quit()
 
     def init_first_page(self):
-        # Component frame
-        self.components_frame = tk.Frame(self.notebook, width=700, height=400)
-        self.components_frame.grid(row=1, column=0, sticky='nsew', padx=50, pady=20)
-        self.components_frame.rowconfigure(0, weight=1)
-        self.components_frame.columnconfigure(0, weight=1)
+        self.components_frame = ttk.Frame(self.first_page)
+        self.components_frame.pack(side='left', fill='y', padx=20)
 
-        self.cpu_button = tk.Button(self.components_frame, command=self.cpu_handler, text='CPU',
-                                    width=20)
-        self.cpu_button.pack(fill='both', pady=5)
-        self.mb_button = tk.Button(self.components_frame, command=self.mb_handler,
-                                   text='Motherboard', width=20)
+        # Total price label
+        self.total_price_label = tk.Label(self.first_page, text='', font=('Arial', 11))
+        self.total_price_label.pack(side='bottom', pady=10, anchor='w')
+
+        # Price range
+        self.price_range1_frame = ttk.Frame(self.first_page)
+        self.price_range1_frame.pack(side='top', fill='x', pady=(20, 0))
+
+        self.price_range1_label = ttk.Label(self.price_range1_frame, text='Price range :')
+        self.price_range1_label.pack(side='left', padx=(0, 10))
+
+        self.price_range1_entry1 = ttk.Entry(self.price_range1_frame, width=10)
+        self.price_range1_entry1.pack(side='left', padx=(0, 5))
+
+        self.dash_label1 = ttk.Label(self.price_range1_frame, text='-')
+        self.dash_label1.pack(side='left', padx=(0, 5))
+
+        self.price_range1_entry2 = ttk.Entry(self.price_range1_frame, width=10)
+        self.price_range1_entry2.pack(side='left')
+
+        # Search
+        self.search_frame = ttk.Frame(self.first_page)
+        self.search_frame.pack(side='top', fill='x', pady=(5, 0))
+
+        self.search_label = ttk.Label(self.search_frame, text='Search :')
+        self.search_label.pack(side='left', padx=(0, 10))
+
+        self.search_var = tk.StringVar()
+        self.search_entry = ttk.Entry(self.search_frame, textvariable=self.search_var, width=50)
+        self.search_entry.pack(side='left', fill='x', expand=True, padx=15, pady=5)
+        self.search_entry.bind('<KeyRelease>', self.search_items)
+
+        # Treeview
+        self.product_tree = ttk.Treeview(self.first_page, columns=('Name', 'Price'), height=13)
+        self.product_tree.heading('#0', text='Number')
+        self.product_tree.heading('Name', text='Name')
+        self.product_tree.heading('Price', text='Price')
+        self.product_tree.pack(side='left', fill='both', expand=True, padx=15)
+        self.product_tree.bind('<<TreeviewSelect>>', self.on_item_select)
+
+        self.cpu_button = ttk.Button(self.components_frame, command=self.cpu_handler, text='CPU',
+                                     width=20)
+        self.cpu_button.pack(fill='both', pady=10)
+        self.mb_button = ttk.Button(self.components_frame, command=self.mb_handler,
+                                    text='Motherboard', width=20)
         self.mb_button.pack(fill='both', pady=5)
-        self.gpu_button = tk.Button(self.components_frame, command=self.gpu_handler, text='GPU',
-                                    width=20)
+        self.gpu_button = ttk.Button(self.components_frame, command=self.gpu_handler, text='GPU',
+                                     width=20)
         self.gpu_button.pack(fill='both', pady=5)
-        self.ram_button = tk.Button(self.components_frame, command=self.ram_handler, text='RAM',
-                                    width=20)
+        self.ram_button = ttk.Button(self.components_frame, command=self.ram_handler, text='RAM',
+                                     width=20)
         self.ram_button.pack(fill='both', pady=5)
-        self.ssd_button = tk.Button(self.components_frame, command=self.ssd_handler, text='SSD',
-                                    width=20)
+        self.ssd_button = ttk.Button(self.components_frame, command=self.ssd_handler, text='SSD',
+                                     width=20)
         self.ssd_button.pack(fill='both', pady=5)
-        self.hdd_button = tk.Button(self.components_frame, command=self.hdd_handler, text='HDD',
-                                    width=20)
+        self.hdd_button = ttk.Button(self.components_frame, command=self.hdd_handler, text='HDD',
+                                     width=20)
         self.hdd_button.pack(fill='both', pady=5)
-        self.build_button = tk.Button(self.components_frame, command=self.build_handler,
-                                      text='Build',
-                                      width=10)
-        self.build_button.pack(side='bottom', pady=10)
 
         # Total price label
         self.total_price_label = tk.Label(self.components_frame,
                                           text=f'Total Price : {self.total_price_value}',
                                           font=('Arial', 11))
-        self.total_price_label.pack(side='left', pady=10)
+        self.total_price_label.pack(side='top', pady=10)
 
-        # Selection frame
-        self.sort_item_selection_frame = tk.Frame(self.notebook)
-        self.sort_item_selection_frame.grid(row=0, column=1, sticky='n')
-        self.sort_item_selection_frame.rowconfigure(0, weight=1)
-        self.sort_item_selection_frame.columnconfigure(1, weight=1)
-
-        self.selection_msg = tk.Label(self.sort_item_selection_frame,
-                                      text="")
-        self.selection_msg.grid(row=0, column=0, pady=5)
-        self.selection_msg.columnconfigure(0, weight=1)
-        self.selection_msg.rowconfigure(0, weight=1)
-
-        # Price range label and entry
-        self.price_range_label = tk.Label(self.sort_item_selection_frame, text='Price Range:')
-        self.price_range_label.grid(row=1, column=0, padx=5)
-        self.price_range_label.columnconfigure(0, weight=1)
-        self.price_range_label.rowconfigure(1, weight=1)
-
-        self.price_range_entry1 = tk.Entry(self.sort_item_selection_frame, width=15)
-        self.price_range_entry1.grid(row=1, column=1)
-        self.price_range_entry1.columnconfigure(1, weight=1)
-        self.price_range_entry1.rowconfigure(1, weight=1)
-
-        self.dash_label = tk.Label(self.sort_item_selection_frame, text='-')
-        self.dash_label.grid(row=1, column=2, padx=5)
-        self.price_range_entry1.columnconfigure(2, weight=1)
-        self.price_range_entry1.rowconfigure(1, weight=1)
-
-        self.price_range_entry2 = tk.Entry(self.sort_item_selection_frame, width=15)
-        self.price_range_entry2.grid(row=1, column=3)
-        self.price_range_entry2.columnconfigure(3, weight=1)
-        self.price_range_entry2.rowconfigure(1, weight=1)
-        # Search box and label
-        self.search_label = tk.Label(self.sort_item_selection_frame, text='Search:')
-        self.search_label.grid(row=0, column=0, padx=5, pady=5)
-
-        self.search_var = tk.StringVar()
-        self.search_entry = tk.Entry(self.sort_item_selection_frame, textvariable=self.search_var)
-        self.search_entry.grid(row=0, column=1, padx=5, pady=5, sticky='ew')
-
-        # Treeview for displaying components
-        self.product_tree = ttk.Treeview(self.notebook, columns=('Name', 'Price'), height=13)
-        self.product_tree.heading('#0', text='Number')
-        self.product_tree.heading('Name', text='Name')
-        self.product_tree.heading('Price', text='Price')
-        self.product_tree.column('#0', width=60)
-        self.product_tree.column('Name', width=250)
-        self.product_tree.column('Price', width=100)
-        self.product_tree.grid(row=1, column=1, padx=10)
-        self.product_tree.columnconfigure(1, weight=1)
-        self.product_tree.rowconfigure(1, weight=1)
-        self.product_tree.bind('<<TreeviewSelect>>', self.on_item_select)
-        self.search_entry.bind('<KeyRelease>', self.search_items)
+        self.build_button = ttk.Button(self.components_frame, command=self.build_handler,
+                                       text='Build',
+                                       width=10)
+        self.build_button.pack(side='top', pady=10)
 
     def search_items(self, event=None):
         search_query = self.search_var.get().lower()
@@ -152,8 +141,44 @@ class UI:
             self.product_tree.insert('', 'end', text=f'{number}', values=item_values)
             number += 1
 
+
     def build_handler(self):
-        pass
+        build_window = tk.Toplevel()
+        build_window.title("Build Details")
+
+        # Create a text widget to display build details
+        build_text = tk.Text(build_window, wrap="word", height=20, width=50)
+        build_text.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+
+        # Gather all selected components
+        current_row = 0
+
+        # Iterate through each button to extract product name
+        for button in [self.cpu_button, self.mb_button, self.gpu_button, self.ram_button, self.ssd_button, self.hdd_button]:
+            product_name = button['text']
+            # Search for product page and price based on product name
+            product_page = ""
+            price = ""
+            for category, data in self.component_data.items():
+                if data['Name'].str.contains(product_name).any():
+                    product_data = data[data['Name'].str.contains(product_name)]
+                    product_page = product_data['Product Page'].iloc[0] if not product_data['Product Page'].empty else "N/A"
+                    price = product_data['Price'].iloc[0] if not product_data['Price'].empty else "N/A"
+                    break
+
+            # Create a clickable hyperlink for the product page
+            if product_page != "N/A":
+                component_link_text = f"{product_name}: {price} Baht - Product Page:"
+                build_text.insert("end", f"{component_link_text}\n")
+                hyperlink = tk.Label(build_text, text=product_page, fg="blue", cursor="hand2")
+                hyperlink.bind("<Button-1>", lambda e, link=product_page: webbrowser.open_new(link))
+                hyperlink.grid(row=current_row, column=0, sticky="w")
+                current_row += 1
+            else:
+                build_text.insert("end", f"{product_name}: {price} Baht - Product Page: N/A\n\n")
+
+        # Make the text widget read-only
+        build_text.config(state="disabled")
 
     def cpu_handler(self):
         self.product_tree.delete(*self.product_tree.get_children())
@@ -234,8 +259,6 @@ class UI:
 
             # Update the total price label
             self.total_price_label.config(text=f'Total Price: {self.total_price_value} Baht')
-
-            # Update the button label
             self.update_button(self.selected_button, name)
 
             # If a component of the same category was previously selected, update the button label
@@ -253,120 +276,104 @@ class UI:
         # Second Page
         self.second_page = ttk.Frame(self.notebook)
         self.notebook.add(self.second_page, text='Comparison')
+        self.graph_frame = ttk.Frame(self.second_page)
+        self.graph_frame.pack(side='left', fill='both', expand=True)
 
         # Graph sort frame
-        self.graph_sort_frame = tk.Frame(self.second_page)
-        self.graph_sort_frame.pack(side='top', fill=tk.BOTH, expand=True)
+        self.graph_sort_frame = ttk.Frame(self.second_page)
+        self.graph_sort_frame.pack(side='right', fill='y', padx=20)
 
         # Price range label, entries, and dash
-        self.price_range_label = tk.Label(self.graph_sort_frame, text='Price range :')
-        self.price_range_label.grid(row=1, column=1, padx=5, pady=3)
-        self.price_range_label.columnconfigure(1, weight=1)
-        self.price_range_label.rowconfigure(1, weight=1)
+        self.price_range_frame = ttk.Frame(self.graph_sort_frame)
+        self.price_range_frame.pack(side='top', fill='x', pady=(20, 0))
 
-        self.price_range_entry1 = tk.Entry(self.graph_sort_frame, width=10)
-        self.price_range_entry1.grid(row=2, column=1, padx=5, pady=1)
-        self.price_range_label.columnconfigure(1, weight=1)
-        self.price_range_label.rowconfigure(2, weight=1)
+        self.price_range_label = ttk.Label(self.price_range_frame, text='Price range :')
+        self.price_range_label.pack(side='left', padx=(0, 10))
 
-        self.dash_label = tk.Label(self.graph_sort_frame, text='-')
-        self.dash_label.grid(row=3, column=1, padx=5, pady=1)
-        self.dash_label.columnconfigure(1, weight=1)
-        self.dash_label.rowconfigure(3, weight=1)
+        self.price_range_entry1 = ttk.Entry(self.price_range_frame, width=10)
+        self.price_range_entry1.pack(side='left', padx=(0, 5))
 
-        self.price_range_entry2 = tk.Entry(self.graph_sort_frame, width=10)
-        self.price_range_entry2.grid(row=4, column=1, padx=5, pady=1)
-        self.price_range_entry2.columnconfigure(1, weight=1)
-        self.price_range_entry2.rowconfigure(4, weight=1)
+        self.dash_label = ttk.Label(self.price_range_frame, text='-')
+        self.dash_label.pack(side='left', padx=(0, 5))
+
+        self.price_range_entry2 = ttk.Entry(self.price_range_frame, width=10)
+        self.price_range_entry2.pack(side='left')
 
         # Components type label and combobox
-        self.components_type_label = tk.Label(self.graph_sort_frame, text='Select part to compare:')
-        self.components_type_label.grid(row=1, column=0, padx=5, pady=3, sticky='w')
-        self.price_range_entry2.columnconfigure(0, weight=1)
-        self.price_range_entry2.rowconfigure(1, weight=1)
+        self.components_type_label = ttk.Label(self.graph_sort_frame,
+                                               text='Select part to compare:')
+        self.components_type_label.pack(side='top', padx=5, pady=(20, 5), anchor='w')
 
         self.components_type_combobox = ttk.Combobox(self.graph_sort_frame, width=10,
                                                      values=['CPU', 'GPU', 'Motherboard', 'RAM',
                                                              'SSD', 'HDD'])
-        self.components_type_combobox.grid(row=1, column=1, padx=1, pady=3, sticky='w')
-        self.components_type_combobox.columnconfigure(1, weight=1)
-        self.components_type_combobox.rowconfigure(1, weight=1)
+        self.components_type_combobox.pack(side='top', padx=5, pady=(0, 5), anchor='w')
 
         # Things to compare label and combobox
-        self.compare_topic_label = tk.Label(self.graph_sort_frame, text='What to compare :')
-        self.compare_topic_label.grid(row=2, column=0, padx=5, pady=3, sticky='w')
-        self.compare_topic_label.columnconfigure(1, weight=1)
-        self.compare_topic_label.rowconfigure(2, weight=1)
+        self.compare_topic_label = ttk.Label(self.graph_sort_frame, text='What to compare :')
+        self.compare_topic_label.pack(side='top', padx=5, pady=(0, 5), anchor='w')
 
         self.compare_combo = ttk.Combobox(self.graph_sort_frame, width=10, values=['None'])
-        self.compare_combo.grid(row=2, column=1, sticky='w')
-        self.compare_combo.columnconfigure(1, weight=1)
-        self.compare_combo.rowconfigure(2, weight=1)
+        self.compare_combo.pack(side='top', padx=5, pady=(0, 5), anchor='w')
 
         # Type of graph label and combobox
-        self.graph_type_label = tk.Label(self.graph_sort_frame, text='Select graph type :')
-        self.graph_type_label.grid(row=3, column=0, padx=5, pady=3, sticky='w')
-        self.graph_type_label.columnconfigure(0, weight=1)
-        self.graph_type_label.rowconfigure(3, weight=1)
+        self.graph_type_label = ttk.Label(self.graph_sort_frame, text='Select graph type :')
+        self.graph_type_label.pack(side='top', padx=5, pady=(0, 5), anchor='w')
 
         self.graph_type_combo = ttk.Combobox(self.graph_sort_frame, width=10,
-                                             values=['Bar Chart', 'Histogram'])
-        self.graph_type_combo.grid(row=3, column=1, pady=3, sticky='w')
-        self.graph_type_combo.columnconfigure(1, weight=1)
-        self.graph_type_combo.rowconfigure(3, weight=1)
+                                             values=['Bar Chart'])
+        self.graph_type_combo.pack(side='top', padx=5, pady=(0, 5), anchor='w')
 
         # Overall Comparison
         self.var = tk.IntVar()
         self.overall_comparison = tk.Checkbutton(self.graph_sort_frame, text='Overall Comparison',
-                                                 variable=self.var)
-        self.overall_comparison.grid(row=4, column=0, pady=3, sticky='w')
-        self.overall_comparison.columnconfigure(0, weight=1)
-        self.overall_comparison.rowconfigure(4, weight=1)
+                                                 variable=self.var,
+                                                 command=self.overall_checkbox_handler)
+        self.overall_comparison.pack(side='top', padx=5, pady=(0, 5), anchor='w')
 
         # List of comparing product
         self.list_of_product_label = tk.Label(self.graph_sort_frame, text='List of product')
-        self.list_of_product_label.grid(row=5, column=0, sticky='w', padx=5)
+        self.list_of_product_label.pack(side='top', padx=5, pady=(0, 5), anchor='w')
         self.product_listbox = tk.Listbox(self.graph_sort_frame, width=30, height=13)
-        self.product_listbox.grid(row=6, column=0, padx=5, columnspan=1, sticky='w')
-        self.product_listbox.columnconfigure(0, weight=1)
-        self.product_listbox.rowconfigure(6, weight=1)
+        self.product_listbox.pack(side='top', padx=5, pady=(0, 5), anchor='w')
 
-        # Plot and Select buttons
-        self.plot_button = tk.Button(self.graph_sort_frame, height=1, width=6, text='Plot',
-                                     command=self.plot_handler)
-        self.plot_button.grid(row=7, column=0, pady=1, padx=5, sticky='w')
-        self.plot_button.columnconfigure(0, weight=1)
-        self.plot_button.rowconfigure(7, weight=1)
+        self.plot_button = ttk.Button(self.graph_sort_frame, width=6, text='Plot',
+                                      command=self.plot_handler)
+        self.plot_button.pack(side='left', padx=5, pady=(0, 5))
 
-        # select button
-        self.select_button = tk.Button(self.graph_sort_frame, height=1, width=6, text='Select',
-                                       command=self.select_handler)
-        self.select_button.grid(row=7, column=0, pady=1, padx=5, sticky='n')
-        self.select_button.columnconfigure(0, weight=1)
-        self.select_button.rowconfigure(7, weight=1)
+        # Select button
+        self.select_button = ttk.Button(self.graph_sort_frame, width=6, text='Select',
+                                        command=self.select_handler)
+        self.select_button.pack(side='left', padx=5, pady=(0, 5))
+
         # Clear button
-        self.clear_button = tk.Button(self.graph_sort_frame, height=1, width=6, text='Clear',
-                                      command=self.clear_handler)
-        self.clear_button.grid(row=7, column=0, pady=1, padx=5, sticky='e')
-        self.clear_button.columnconfigure(0, weight=1)
-        self.clear_button.rowconfigure(7, weight=1)
+        self.clear_button = ttk.Button(self.graph_sort_frame, width=6, text='Clear',
+                                       command=self.clear_handler)
+        self.clear_button.pack(side='left', padx=5, pady=(0, 5))
 
         # graph
-        fig, ax = plt.subplots(figsize=(5, 2))
+        fig, ax = plt.subplots(figsize=(7, 4))
         fig.set_dpi(100)
-        self.graph = FigureCanvasTkAgg(fig, master=self.graph_sort_frame)
-        self.graph.get_tk_widget().grid(row=6, column=1, padx=5, sticky='nsew')
+        self.graph = FigureCanvasTkAgg(fig, master=self.graph_frame)
+        self.graph.get_tk_widget().pack(fill='both', expand=True)
         self.graph.get_tk_widget().columnconfigure(1, weight=1)
         self.graph.get_tk_widget().rowconfigure(6, weight=1)
         self.components_type_combobox.bind('<<ComboboxSelected>>', self.load_filter)
         self.compare_combo.bind('<<ComboboxSelected>>')
         self.price_range_entry1.config(state='disabled')
         self.price_range_entry2.config(state='disabled')
-        overall_comparison_checked = self.var
+
+    def overall_checkbox_handler(self):
+        overall_comparison_checked = self.var.get()
         if overall_comparison_checked == 1:
+            self.graph_type_combo['values'] = ['Histogram', 'Bar Chart']
             self.graph_type_combo.config(state='readonly')
             self.price_range_entry1.config(state='normal')
             self.price_range_entry2.config(state='normal')
+        else:
+            self.graph_type_combo['values'] = ['Bar Chart']
+            self.price_range_entry1.config(state='disabled')
+            self.price_range_entry2.config(state='disabled')
 
     def plot_handler(self):
         try:
@@ -390,7 +397,6 @@ class UI:
             data = self.data_search(self.components_type_combobox.get())
 
             if selected_graph_type == 'Histogram':
-                # Get the data to plot
                 compare_attribute = self.compare_combo.get()
                 data_to_plot = data[compare_attribute]
 
@@ -413,14 +419,35 @@ class UI:
                 ax.set_title('Bar Chart')
 
             # Grid the new graph
-            self.graph = FigureCanvasTkAgg(fig, master=self.graph_sort_frame)
-            self.graph.get_tk_widget().grid(row=6, column=1, padx=5)
-            self.graph.get_tk_widget().columnconfigure(1, weight=1)
-            self.graph.get_tk_widget().rowconfigure(6, weight=1)
+            # Grid the new graph
+            self.graph = FigureCanvasTkAgg(fig, master=self.graph_frame)
+            self.graph.get_tk_widget().pack(fill='both', expand=True)
         except Exception:
             messagebox.showerror("Error",
                                  "Please fill in all attribute")
             return
+
+    def search_items_select(self, event=None):
+        search_query = self.search_entry_select.get().lower()
+        if not search_query:
+            return
+        all_items = [(self.list_select.item(child, 'values'), child) for child in
+                     self.list_select.get_children()]
+        filtered_items = [(item_values, child) for item_values, child in all_items if
+                          item_values and search_query in item_values[0].lower()]
+
+        # Clear the treeview
+        self.list_select.delete(*self.list_select.get_children())
+
+        # Sort the filtered items
+        filtered_items.sort(key=lambda x: x[0][0].lower())
+        print(filtered_items)
+
+        # Populate the treeview with the filtered and sorted items
+        number = 1
+        for item_values, child in filtered_items:
+            self.list_select.insert('', 'end', text=f'{number}', values=item_values)
+            number += 1
 
     def select_handler(self):
         self.select_window = tk.Tk()
@@ -428,12 +455,12 @@ class UI:
         self.select_type_label.pack(side='top', expand=True)
 
         # Search box
-        self.search_label = tk.Label(self.select_window, text='Search:')
-        self.search_label.pack(side='top', pady=5, expand=True)
+        self.search_label_select = tk.Label(self.select_window, text='Search:')
+        self.search_label_select.pack(side='top', pady=5, expand=True)
 
-        self.search_var = tk.StringVar()
-        self.search_entry = tk.Entry(self.select_window, textvariable=self.search_var)
-        self.search_entry.pack(side='top', padx=5, pady=5, fill='x', expand=True)
+        self.search_var_select = tk.StringVar()
+        self.search_entry_select = tk.Entry(self.select_window, textvariable=self.search_var_select)
+        self.search_entry_select.pack(side='top', padx=5, pady=5, fill='x', expand=True)
 
         # Create the treeview to display the selected items
         self.list_select = ttk.Treeview(self.select_window, columns=('Name', 'Price'), height=10)
@@ -476,27 +503,8 @@ class UI:
 
         on_select()
 
-        def search_items(event=None):
-            search_query = self.search_var.get().lower()
-            if not search_query:
-                return
-            all_items = [(self.list_select.item(child, 'values'), child) for child in
-                         self.list_select.get_children()]
-            filtered_items = [(item_values, child) for item_values, child in all_items if
-                              item_values and search_query in item_values[0].lower()]
-            self.list_select.delete(*self.list_select.get_children())
-            filtered_items.sort(
-                key=lambda x: x[0][0].lower())
-            number = 1
-            for item_values, child in filtered_items:
-                self.list_select.insert('', 'end', text=f'{number}', values=item_values)
-                number += 1
-
         # Bind the search box to trigger search on key release
-        self.search_entry.bind('<KeyRelease>', search_items)
-
-        # Bind the search box to filter items when the user types in it
-        self.search_var.trace_add('write', lambda *args: search_items())
+        self.search_entry_select.bind('<KeyRelease>', self.search_items_select)
 
         def add_to_select_handler(event):
             selected_item = self.list_select.item(self.list_select.selection())['values']
@@ -542,6 +550,5 @@ class UI:
             return hdd_data
 
     def run(self):
-        self.window.mainloop()
-
+        self.mainloop()
 
