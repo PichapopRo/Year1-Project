@@ -57,21 +57,23 @@ class UI(tk.Tk):
         self.total_price_label = tk.Label(self.first_page, text='', font=('Arial', 11))
         self.total_price_label.pack(side='bottom', pady=10, anchor='w')
 
-        # Price range
-        self.price_range1_frame = ttk.Frame(self.first_page)
-        self.price_range1_frame.pack(side='top', fill='x', pady=(20, 0))
+        # Price range frame
+        self.price_range_frame = ttk.Frame(self.first_page)
+        self.price_range_frame.pack(side='top', fill='x', pady=(20, 0))
 
-        self.price_range1_label = ttk.Label(self.price_range1_frame, text='Price range :')
+        self.price_range1_label = ttk.Label(self.price_range_frame, text='Price range :')
         self.price_range1_label.pack(side='left', padx=(0, 10))
 
-        self.price_range1_entry1 = ttk.Entry(self.price_range1_frame, width=10)
+        self.price_range1_entry1 = ttk.Entry(self.price_range_frame, width=10)
         self.price_range1_entry1.pack(side='left', padx=(0, 5))
+        self.price_range1_entry1.bind('<KeyRelease>', self.filter_items)
 
-        self.dash_label1 = ttk.Label(self.price_range1_frame, text='-')
-        self.dash_label1.pack(side='left', padx=(0, 5))
+        self.dash_label = ttk.Label(self.price_range_frame, text='-')
+        self.dash_label.pack(side='left', padx=(0, 5))
 
-        self.price_range1_entry2 = ttk.Entry(self.price_range1_frame, width=10)
+        self.price_range1_entry2 = ttk.Entry(self.price_range_frame, width=10)
         self.price_range1_entry2.pack(side='left')
+        self.price_range1_entry2.bind('<KeyRelease>', self.filter_items)
 
         # Search
         self.search_frame = ttk.Frame(self.first_page)
@@ -141,6 +143,44 @@ class UI(tk.Tk):
             self.product_tree.insert('', 'end', text=f'{number}', values=item_values)
             number += 1
 
+    def filter_items(self, event=None):
+        min_price = self.price_range1_entry1.get()
+        max_price = self.price_range1_entry2.get()
+        try:
+            min_price = int(min_price)
+        except ValueError:
+            min_price = 0
+
+        try:
+            max_price = int(max_price)
+        except ValueError:
+            max_price = float('inf')
+        if max_price <= min_price:
+            pass
+        search_query = self.search_var.get().lower()
+        filtered_items = []
+        for child in self.product_tree.get_children():
+            item = self.product_tree.item(child)
+            values = item["values"]
+            if values:
+                price_str = values[1].split()[0]
+                try:
+                    price = int(price_str)
+                    print("Price:", price)
+                    if min_price <= price <= max_price and (
+                            not search_query or search_query in values[0].lower()):
+                        print("Item passed filter")
+                        filtered_items.append((item["text"], values))
+                except ValueError:
+                    pass
+
+        # Clear the treeview
+        self.product_tree.delete(*self.product_tree.get_children())
+        number = 1
+        for item_text, item_values in filtered_items:
+            self.product_tree.insert('', 'end', text=f'{number}', values=item_values)
+            number += 1
+
 
     def build_handler(self):
         build_window = tk.Toplevel()
@@ -154,7 +194,8 @@ class UI(tk.Tk):
         current_row = 0
 
         # Iterate through each button to extract product name
-        for button in [self.cpu_button, self.mb_button, self.gpu_button, self.ram_button, self.ssd_button, self.hdd_button]:
+        for button in [self.cpu_button, self.mb_button, self.gpu_button, self.ram_button,
+                       self.ssd_button, self.hdd_button]:
             product_name = button['text']
             # Search for product page and price based on product name
             product_page = ""
@@ -162,8 +203,10 @@ class UI(tk.Tk):
             for category, data in self.component_data.items():
                 if data['Name'].str.contains(product_name).any():
                     product_data = data[data['Name'].str.contains(product_name)]
-                    product_page = product_data['Product Page'].iloc[0] if not product_data['Product Page'].empty else "N/A"
-                    price = product_data['Price'].iloc[0] if not product_data['Price'].empty else "N/A"
+                    product_page = product_data['Product Page'].iloc[0] if not product_data[
+                        'Product Page'].empty else "N/A"
+                    price = product_data['Price'].iloc[0] if not product_data[
+                        'Price'].empty else "N/A"
                     break
 
             # Create a clickable hyperlink for the product page
@@ -365,8 +408,8 @@ class UI(tk.Tk):
 
     def overall_checkbox_handler(self):
         overall_comparison_checked = self.var.get()
-        if overall_comparison_checked == 1:
-            self.graph_type_combo['values'] = ['Histogram', 'Bar Chart']
+        if overall_comparison_checked == 1 and self.compare_combo['value'] == 'Price':
+            self.graph_type_combo['values'] = ['Histogram']
             self.graph_type_combo.config(state='readonly')
             self.price_range_entry1.config(state='normal')
             self.price_range_entry2.config(state='normal')
@@ -392,7 +435,7 @@ class UI(tk.Tk):
             if self.graph is not None:
                 self.graph.get_tk_widget().destroy()
 
-            fig, ax = plt.subplots(figsize=(5, 2))
+            fig, ax = plt.subplots(figsize=(7, 4))
             fig.set_dpi(100)
             data = self.data_search(self.components_type_combobox.get())
 
@@ -418,8 +461,6 @@ class UI(tk.Tk):
                 ax.set_ylabel('Value')
                 ax.set_title('Bar Chart')
 
-            # Grid the new graph
-            # Grid the new graph
             self.graph = FigureCanvasTkAgg(fig, master=self.graph_frame)
             self.graph.get_tk_widget().pack(fill='both', expand=True)
         except Exception:
@@ -441,7 +482,6 @@ class UI(tk.Tk):
 
         # Sort the filtered items
         filtered_items.sort(key=lambda x: x[0][0].lower())
-        print(filtered_items)
 
         # Populate the treeview with the filtered and sorted items
         number = 1
@@ -552,3 +592,6 @@ class UI(tk.Tk):
     def run(self):
         self.mainloop()
 
+
+Ui = UI()
+Ui.run()
