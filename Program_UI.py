@@ -489,13 +489,13 @@ class PCPartController:
         overall_comparison_checked = self.view.var.get()
         if overall_comparison_checked == 1:
             self.view.graph_type_combo['values'] = ['Histogram']
-            self.view.graph_type_combo['value'] = 'Histogram'
+            self.view.graph_type_combo.set('Histogram')
             self.view.graph_type_combo.config(state='readonly')
         else:
             self.view.graph_type_combo['values'] = ['Bar Chart']
-            self.view.graph_type_combo['value'] = 'Bar Chart'
-            self.view.price_range_entry1['value'] = ''
-            self.view.price_range_entry2['value'] = ''
+            self.view.graph_type_combo.set('Bar Chart')
+            self.view.price_range_entry1['value'] = None
+            self.view.price_range_entry2['value'] = None
             self.view.price_range_entry1.config(state='disabled')
             self.view.price_range_entry2.config(state='disabled')
 
