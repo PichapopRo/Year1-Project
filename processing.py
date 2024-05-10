@@ -81,39 +81,5 @@ def extract_numeric_value(value):
         return None
 
 
-class Plotting:
-    def __init__(self):
-        self.graph_type = None
-        convert_currency_data()
-
-    def select_graph(self, graph):
-        self.graph_type = graph
-
-    def histogram(self, data, attribute, graph_range=None):
-        if graph_range is not None:
-            plt.hist(data[attribute], bins=10, color='skyblue', edgecolor='black',
-                     range=graph_range)
-        plt.xlabel(attribute)
-        plt.ylabel('Frequency')
-        plt.title(f'{attribute} Histogram')
-        plt.show()
-
-    def bar_chart(self, data, attribute1):
-        plt.figure(figsize=(10, 6))  # Set the figure size
-        plt.bar(data, attribute1, color='skyblue')
-        plt.xlabel('Products')
-        plt.ylabel(attribute1)
-        plt.title(f'Comparison of {attribute1}')
-        plt.xticks(rotation=45)
-        plt.tight_layout()
-        plt.show()
-
-    def pie_chart(self, attribute):
-        pass
-
-
 convert_currency_data()
 
-# test = Plotting()
-# test.histogram(gpu_data, "Price", (10000, 20000))
-# test.bar_chart(gpu_data['Name'], "Price")
