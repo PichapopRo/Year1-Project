@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+import webbrowser
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from product_value import *
-import webbrowser
 from processing import *
 
 
@@ -14,6 +14,29 @@ class PCPartModel:
 class PCPartView(tk.Tk):
     def __init__(self, controller):
         super().__init__()
+        self.second_page = None
+        self.price_range_label = None
+        self.build_button = None
+        self.total_price_label = None
+        self.ram_button = None
+        self.hdd_button = None
+        self.ssd_button = None
+        self.gpu_button = None
+        self.product_tree = None
+        self.search_var = None
+        self.mb_button = None
+        self.first_page = None
+        self.cpu_button = None
+        self.search_entry = None
+        self.search_label = None
+        self.search_frame = None
+        self.price_range1_entry2 = None
+        self.dash_label = None
+        self.price_range1_label = None
+        self.price_range1_entry1 = None
+        self.price_range_frame = None
+        self.components_frame = None
+        self.notebook = None
         self.controller = controller
         self.title('PC Part Picker')
         self.init_components()
@@ -216,79 +239,84 @@ class PCPartView(tk.Tk):
         self.statistic_frame.pack(side='top', fill='both', expand=True)
 
         # Display for statistics
-        self.stats_display_frame = ttk.Frame(self.statistic_frame)
-        self.stats_display_frame.pack(side='top', fill='both', expand=True)
+        stats_display_frame = ttk.Frame(self.statistic_frame)
+        stats_display_frame.pack(side='top', fill='both', expand=True)
 
-        self.cpu_frame = ttk.Frame(self.stats_display_frame)
-        self.cpu_frame.pack(side='left', padx=10, pady=10, anchor='n')
+        cpu_frame = ttk.Frame(stats_display_frame)
+        cpu_frame.pack(side='left', padx=10, pady=10, anchor='n')
         # Display CPU-Core statistics
-        cpu_SD_label = ttk.Label(self.cpu_frame,
+        cpu_SD_label = ttk.Label(cpu_frame,
                                  text='CPU')
         cpu_SD_label.pack(side='top', anchor='w', padx=15)
-        cpu_mean_label = ttk.Label(self.cpu_frame,
+        cpu_mean_label = ttk.Label(cpu_frame,
                                    text=f'Mean Core: {np.mean(CPU_data["Cores"]):.4f}')
         cpu_mean_label.pack(side='top', anchor='w', padx=15)
-        cpu_SD_label = ttk.Label(self.cpu_frame,
+        cpu_SD_label = ttk.Label(cpu_frame,
                                  text=f'Standard Deviation Core: {np.std(CPU_data["Cores"]):.4f}')
         cpu_SD_label.pack(side='top', anchor='w', padx=15)
 
         # Display CPU-TDP statistics
         CPU_data["TDP_Numeric"] = CPU_data["TDP"].apply(extract_numeric_value)
-        cpu_mean_label = ttk.Label(self.cpu_frame,
+        cpu_mean_label = ttk.Label(cpu_frame,
                                    text=f'Mean TDP: {np.mean(CPU_data["TDP_Numeric"]):.4f}')
         cpu_mean_label.pack(side='top', anchor='w', padx=15)
-        cpu_SD_label = ttk.Label(self.cpu_frame,
-                                 text=f'Standard Deviation TDP: {np.std(CPU_data["TDP_Numeric"]):.4f}')
+        cpu_SD_label = ttk.Label(cpu_frame,
+                                 text=f'Standard Deviation TDP: '
+                                      f'{np.std(CPU_data["TDP_Numeric"]):.4f}')
         cpu_SD_label.pack(side='top', anchor='w', padx=15)
 
-        self.gpu_frame = ttk.Frame(self.stats_display_frame)
-        self.gpu_frame.pack(side='left', padx=10, pady=10, anchor='n')
+        gpu_frame = ttk.Frame(stats_display_frame)
+        gpu_frame.pack(side='left', padx=10, pady=10, anchor='n')
         # Display GPU-Clock Speed statistics
-        GPU_label = ttk.Label(self.gpu_frame,
+        GPU_label = ttk.Label(gpu_frame,
                               text='GPU')
         GPU_label.pack(side='top', anchor='w', padx=15)
         gpu_data["Boost Clock Numeric"] = gpu_data["Boost Clock"].apply(extract_numeric_value)
         gpu_data["TDP Numeric"] = gpu_data["TDP"].apply(extract_numeric_value)
-        gpu_mean_label = ttk.Label(self.gpu_frame,
-                                   text=f'Mean Boost Clock: {np.mean(gpu_data["Boost Clock Numeric"]):.4f}')
+        gpu_mean_label = ttk.Label(gpu_frame,
+                                   text=f'Mean Boost Clock: '
+                                        f'{np.mean(gpu_data["Boost Clock Numeric"]):.4f}')
         gpu_mean_label.pack(side='top', anchor='n', padx=15)
-        gpu_sd = ttk.Label(self.gpu_frame,
-                           text=f'Standard Deviation Boost Clock: {np.std(gpu_data["Boost Clock Numeric"]):.4f}')
+        gpu_sd = ttk.Label(gpu_frame,
+                           text=f'Standard Deviation Boost Clock: '
+                                f'{np.std(gpu_data["Boost Clock Numeric"]):.4f}')
         gpu_sd.pack(side='top', anchor='w', padx=15)
 
-        self.ssd_frame = ttk.Frame(self.stats_display_frame)
-        self.ssd_frame.pack(side='left', padx=10, pady=10, anchor='n')
+        ssd_frame = ttk.Frame(stats_display_frame)
+        ssd_frame.pack(side='left', padx=10, pady=10, anchor='n')
         # Display SSD-Size statistics
-        ssd_label = ttk.Label(self.ssd_frame,
+        ssd_label = ttk.Label(ssd_frame,
                               text='SSD')
         ssd_label.pack(side='top', anchor='w', padx=15)
         ssd_data["Size Numeric"] = ssd_data["Size"].apply(extract_numeric_value)
-        ssd_mean_label = ttk.Label(self.ssd_frame,
+        ssd_mean_label = ttk.Label(ssd_frame,
                                    text=f'Mean size: {np.mean(ssd_data["Size Numeric"]):.4f}')
         ssd_mean_label.pack(side='top', anchor='w', padx=15)
-        ssd_SD_label = ttk.Label(self.ssd_frame,
-                                 text=f'Standard Deviation size: {np.std(ssd_data["Size Numeric"]):.4f}')
+        ssd_SD_label = ttk.Label(ssd_frame,
+                                 text=f'Standard Deviation size: '
+                                      f'{np.std(ssd_data["Size Numeric"]):.4f}')
         ssd_SD_label.pack(side='top', anchor='w', padx=15)
 
-        self.hdd_frame = ttk.Frame(self.stats_display_frame)
-        self.hdd_frame.pack(side='left', padx=10, pady=10, anchor='n')
+        hdd_frame = ttk.Frame(stats_display_frame)
+        hdd_frame.pack(side='left', padx=10, pady=10, anchor='n')
         # Display HDD-Size
-        hdd_label = ttk.Label(self.hdd_frame,
+        hdd_label = ttk.Label(hdd_frame,
                               text='HDD')
         hdd_label.pack(side='top', anchor='w', padx=15)
         hdd_data["Size Numeric"] = hdd_data["Size"].apply(extract_numeric_value)
-        hdd_mean_label = ttk.Label(self.hdd_frame,
+        hdd_mean_label = ttk.Label(hdd_frame,
                                    text=f'Mean size: {np.mean(hdd_data["Size Numeric"]):.4f}')
         hdd_mean_label.pack(side='top', anchor='w', padx=15)
-        hdd_SD_label = ttk.Label(self.hdd_frame,
-                                 text=f'Standard Deviation size: {np.std(hdd_data["Size Numeric"]):.4f}')
+        hdd_SD_label = ttk.Label(hdd_frame,
+                                 text=f'Standard Deviation size: '
+                                      f'{np.std(hdd_data["Size Numeric"]):.4f}')
         hdd_SD_label.pack(side='top', anchor='w', padx=15)
-        self.data_type_label = tk.Label(self.cpu_frame, text='Choose data type :')
-        self.data_type_combo = ttk.Combobox(self.cpu_frame,
+        data_type_label = tk.Label(cpu_frame, text='Choose data type :')
+        self.data_type_combo = ttk.Combobox(cpu_frame,
                                             values=['CPU', 'RAM', 'SSD', 'HDD', 'GPU'],
                                             state='readonly')
         self.data_type_combo.bind('<<ComboboxSelected>>', self.controller.plot_correlation_graph)
-        self.data_type_label.pack(side='top', anchor='w', pady=5)
+        data_type_label.pack(side='top', anchor='w', pady=5)
         self.data_type_combo.pack(side='top', anchor='w', pady=5)
         fig, ax = plt.subplots(figsize=(7, 4))
         fig.set_dpi(100)
@@ -514,7 +542,8 @@ class PCPartController:
                 compare_attribute = self.view.compare_combo.get()
                 price_range_min = self.view.price_range_entry1.get()
                 price_range_max = self.view.price_range_entry2.get()
-                if price_range_max < price_range_min and self.view.var.get() == 1 and self.view.compare_combo.get() == 'Price':
+                if (price_range_max < price_range_min and self.view.var.get() == 1 and
+                        self.view.compare_combo.get() == 'Price'):
                     messagebox.showerror("Maximum must be higher than minimum price.")
                     return
 
@@ -713,15 +742,3 @@ class PCPartController:
 
     def run(self):
         self.view.mainloop()
-
-
-def main():
-    model = PCPartModel()
-    controller = PCPartController(model, None)
-    view = PCPartView(controller)
-    controller.view = view
-    view.mainloop()
-
-
-if __name__ == "__main__":
-    main()
