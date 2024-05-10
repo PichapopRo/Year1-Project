@@ -69,6 +69,18 @@ def convert_currency_data():
     ram_data['Price'] = ram_data['Price'].apply(convert_to_thb)
 
 
+def extract_numeric_value(value):
+    # Extract numeric value from a string without using re module
+    numeric_value = ""
+    for char in str(value):
+        if char.isdigit():
+            numeric_value += char
+    if numeric_value:
+        return int(numeric_value)
+    else:
+        return None
+
+
 class Plotting:
     def __init__(self):
         self.graph_type = None

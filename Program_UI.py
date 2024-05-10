@@ -1,3 +1,4 @@
+import seaborn as sns
 import tkinter as tk
 from tkinter import ttk, messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -45,6 +46,7 @@ class UI(tk.Tk):
         self.notebook.add(self.first_page, text='Build PC')
         self.init_first_page()
         self.init_second_page()
+        self.init_third_page()
 
     def exit_program(self):
         self.quit()
@@ -177,7 +179,6 @@ class UI(tk.Tk):
         for item_text, item_values in filtered_items:
             self.product_tree.insert('', 'end', text=f'{number}', values=item_values)
             number += 1
-
 
     def build_handler(self):
         build_window = tk.Toplevel()
@@ -381,20 +382,16 @@ class UI(tk.Tk):
         fig.set_dpi(100)
         self.graph = FigureCanvasTkAgg(fig, master=self.graph_frame)
         self.graph.get_tk_widget().pack(fill='both', expand=True)
-        self.graph.get_tk_widget().columnconfigure(1, weight=1)
-        self.graph.get_tk_widget().rowconfigure(6, weight=1)
         self.components_type_combobox.bind('<<ComboboxSelected>>', self.load_filter)
-        self.compare_combo.bind('<<ComboboxSelected>>')
+        self.compare_combo.bind('<<ComboboxSelected>>', self.price_range_compare_handler)
         self.price_range_entry1.config(state='disabled')
         self.price_range_entry2.config(state='disabled')
 
     def overall_checkbox_handler(self):
         overall_comparison_checked = self.var.get()
-        if overall_comparison_checked == 1 and self.compare_combo['value'] == 'Price':
+        if overall_comparison_checked == 1:
             self.graph_type_combo['values'] = ['Histogram']
             self.graph_type_combo.config(state='readonly')
-            self.price_range_entry1.config(state='normal')
-            self.price_range_entry2.config(state='normal')
         else:
             self.graph_type_combo['values'] = ['Bar Chart']
             self.price_range_entry1.config(state='disabled')
@@ -402,15 +399,11 @@ class UI(tk.Tk):
 
     def plot_handler(self):
         try:
-            overall_comparison_checked = self.var.get()
-
-            if overall_comparison_checked == 1:
-                self.graph_type_combo['values'] = ['Histogram', 'Bar Chart']
-            else:
-                if self.product_listbox.size() == 0:
-                    messagebox.showerror("Error",
-                                         "Please select at least one product for comparison.")
-                    return
+            if self.product_listbox.size() == 0 and self.var.get() == 0:
+                messagebox.showerror("Error",
+                                     "Please select at least one product for comparison or "
+                                     "check overall comparison.")
+                return
 
             selected_graph_type = self.graph_type_combo.get()
 
@@ -516,10 +509,7 @@ class UI(tk.Tk):
         def on_select(*args):
             selected_component = self.components_type_combobox.get()
             populate_treeview(selected_component)
-
         on_select()
-
-        # Bind the search box to trigger search on key release
         self.search_entry_select.bind('<KeyRelease>', self.search_items_select)
 
         def add_to_select_handler(event):
@@ -532,6 +522,15 @@ class UI(tk.Tk):
         self.done_button = tk.Button(self.select_window, text='Done',
                                      command=self.select_window.destroy)
         self.done_button.pack(side='bottom', pady=10, expand=True)
+
+    def price_range_compare_handler(self, *args):
+        overall_comparison_checked = self.var.get()
+        if overall_comparison_checked == 1 and self.compare_combo.get() == 'Price':
+            self.price_range_entry1.config(state='normal')
+            self.price_range_entry2.config(state='normal')
+        else:
+            self.price_range_entry1.config(state='disable')
+            self.price_range_entry2.config(state='disable')
 
     def clear_handler(self):
         self.product_listbox.delete(0, tk.END)
@@ -565,7 +564,137 @@ class UI(tk.Tk):
         elif data_type == 'HDD':
             return hdd_data
 
+    def init_third_page(self):
+        # Third Page
+        self.third_page = ttk.Frame(self.notebook)
+        self.notebook.add(self.third_page, text='Descriptive Statistic and Correlation')
+        # Descriptive Statistics Frame
+        self.statistic_frame = ttk.Frame(self.third_page)
+        self.statistic_frame.pack(side='top', fill='both', expand=True)
+
+        # Display for statistics
+        self.stats_display_frame = ttk.Frame(self.statistic_frame)
+        self.stats_display_frame.pack(side='top', fill='both', expand=True)
+
+        self.cpu_frame = ttk.Frame(self.stats_display_frame)
+        self.cpu_frame.pack(side='left', padx=10, pady=10, anchor='n')
+        # Display CPU-Core statistics
+        cpu_SD_label = ttk.Label(self.cpu_frame,
+                                 text='CPU')
+        cpu_SD_label.pack(side='top', anchor='w', padx=15)
+        cpu_mean_label = ttk.Label(self.cpu_frame,
+                                   text=f'Mean Core: {np.mean(CPU_data["Cores"]):.4f}')
+        cpu_mean_label.pack(side='top', anchor='w', padx=15)
+        cpu_SD_label = ttk.Label(self.cpu_frame,
+                                 text=f'Standard Deviation Core: {np.std(CPU_data["Cores"]):.4f}')
+        cpu_SD_label.pack(side='top', anchor='w', padx=15)
+
+        # Display CPU-TDP statistics
+        CPU_data["TDP_Numeric"] = CPU_data["TDP"].apply(extract_numeric_value)
+        cpu_mean_label = ttk.Label(self.cpu_frame,
+                                   text=f'Mean TDP: {np.mean(CPU_data["TDP_Numeric"]):.4f}')
+        cpu_mean_label.pack(side='top', anchor='w', padx=15)
+        cpu_SD_label = ttk.Label(self.cpu_frame,
+                                 text=f'Standard Deviation TDP: {np.std(CPU_data["TDP_Numeric"]):.4f}')
+        cpu_SD_label.pack(side='top', anchor='w', padx=15)
+
+        self.gpu_frame = ttk.Frame(self.stats_display_frame)
+        self.gpu_frame.pack(side='left', padx=10, pady=10, anchor='n')
+        # Display GPU-Clock Speed statistics
+        GPU_label = ttk.Label(self.gpu_frame,
+                              text='GPU')
+        GPU_label.pack(side='top', anchor='w', padx=15)
+        gpu_data["Boost Clock Numeric"] = gpu_data["Boost Clock"].apply(extract_numeric_value)
+        gpu_data["TDP Numeric"] = gpu_data["TDP"].apply(extract_numeric_value)
+        gpu_mean_label = ttk.Label(self.gpu_frame,
+                                   text=f'Mean Boost Clock: {np.mean(gpu_data["Boost Clock Numeric"]):.4f}')
+        gpu_mean_label.pack(side='top', anchor='n', padx=15)
+        gpu_sd = ttk.Label(self.gpu_frame,
+                           text=f'Standard Deviation Boost Clock: {np.std(gpu_data["Boost Clock Numeric"]):.4f}')
+        gpu_sd.pack(side='top', anchor='w', padx=15)
+
+        self.ssd_frame = ttk.Frame(self.stats_display_frame)
+        self.ssd_frame.pack(side='left', padx=10, pady=10, anchor='n')
+        # Display SSD-Size statistics
+        ssd_label = ttk.Label(self.ssd_frame,
+                              text='SSD')
+        ssd_label.pack(side='top', anchor='w', padx=15)
+        ssd_data["Size Numeric"] = ssd_data["Size"].apply(extract_numeric_value)
+        ssd_mean_label = ttk.Label(self.ssd_frame,
+                                   text=f'Mean size: {np.mean(ssd_data["Size Numeric"]):.4f}')
+        ssd_mean_label.pack(side='top', anchor='w', padx=15)
+        ssd_SD_label = ttk.Label(self.ssd_frame,
+                                 text=f'Standard Deviation size: {np.std(ssd_data["Size Numeric"]):.4f}')
+        ssd_SD_label.pack(side='top', anchor='w', padx=15)
+
+        self.hdd_frame = ttk.Frame(self.stats_display_frame)
+        self.hdd_frame.pack(side='left', padx=10, pady=10, anchor='n')
+        # Display HDD-Size
+        hdd_label = ttk.Label(self.hdd_frame,
+                              text='HDD')
+        hdd_label.pack(side='top', anchor='w', padx=15)
+        hdd_data["Size Numeric"] = hdd_data["Size"].apply(extract_numeric_value)
+        hdd_mean_label = ttk.Label(self.hdd_frame,
+                                   text=f'Mean size: {np.mean(hdd_data["Size Numeric"]):.4f}')
+        hdd_mean_label.pack(side='top', anchor='w', padx=15)
+        hdd_SD_label = ttk.Label(self.hdd_frame,
+                                 text=f'Standard Deviation size: {np.std(hdd_data["Size Numeric"]):.4f}')
+        hdd_SD_label.pack(side='top', anchor='w', padx=15)
+        self.data_type_label = tk.Label(self.cpu_frame, text='Choose data type :')
+        self.data_type_combo = ttk.Combobox(self.cpu_frame,
+                                            values=['CPU', 'RAM', 'SSD', 'HDD', 'GPU'])
+        self.data_type_combo.bind('<<ComboboxSelected>>', self.plot_correlation_graph)
+        self.data_type_label.pack(side='top', anchor='w', pady=5)
+        self.data_type_combo.pack(side='top', anchor='w', pady=5)
+        fig, ax = plt.subplots(figsize=(7, 4))
+        fig.set_dpi(100)
+        self.correlation_canvas = FigureCanvasTkAgg(fig, master=self.statistic_frame)
+        self.correlation_canvas.get_tk_widget().pack(side='top', fill='both', expand=True)
+
+    def plot_correlation_graph(self, *args):
+
+        if hasattr(self, 'correlation_canvas'):
+            self.correlation_canvas.get_tk_widget().destroy()
+
+        selected_data_type = self.data_type_combo.get()
+        if selected_data_type not in DataType.__members__:
+            return
+
+        selected_data = DataType[selected_data_type].value
+        if selected_data_type == 'CPU':
+            data_source = CPU_data
+        elif selected_data_type == 'RAM':
+            data_source = ram_data
+        elif selected_data_type == 'HDD':
+            data_source = hdd_data
+        elif selected_data_type == 'SSD':
+            data_source = ssd_data
+        elif selected_data_type == 'GPU':
+            data_source = gpu_data
+        else:
+            return
+        ram_data['Size Numeric'] = ram_data["Size"].apply(extract_numeric_value)
+        ssd_data['Size Numeric'] = ssd_data["Size"].apply(extract_numeric_value)
+        gpu_data['TDP Numeric'] = gpu_data['TDP'].apply(extract_numeric_value)
+
+        self.correlation_fig = plt.Figure(figsize=(7, 4))
+        ax = self.correlation_fig.add_subplot(111)
+        ax.scatter(data_source[selected_data[0]], data_source[selected_data[1]], alpha=0.7)
+
+        # Setting labels and title
+        ax.set_xlabel(selected_data[0])
+        ax.set_ylabel(selected_data[1])
+        ax.set_title(f'Scatter Plot: {selected_data[0]} vs. {selected_data[1]}')
+
+        self.correlation_canvas = FigureCanvasTkAgg(self.correlation_fig,
+                                                    master=self.statistic_frame)
+        self.correlation_canvas.draw()
+        self.correlation_canvas.get_tk_widget().pack(side='top', fill='both', expand=True)
+
+
     def run(self):
         self.mainloop()
 
 
+Ui = UI()
+Ui.run()
