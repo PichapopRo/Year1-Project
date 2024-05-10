@@ -696,5 +696,3 @@ class UI(tk.Tk):
         self.mainloop()
 
 
-Ui = UI()
-Ui.run()
