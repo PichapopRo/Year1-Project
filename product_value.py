@@ -3,7 +3,7 @@ from processing import *
 
 
 class Component(Enum):
-    GPU = ['Vram', 'Price', 'Clock', 'TDP']
+    GPU = ['Vram', 'Price', 'Boost Clock', 'TDP']
     CPU = ['Cores', 'Threads', 'Turbo Clock', 'Price', 'TDP']
     SSD = ['Size', 'Price', 'Clock']
     HDD = ['Size', 'Price']

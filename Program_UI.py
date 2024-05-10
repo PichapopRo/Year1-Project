@@ -329,7 +329,7 @@ class PCPartUI(tk.Tk):
                                                text='Select part to compare:')
         self.components_type_label.pack(side='top', padx=5, pady=(20, 5), anchor='w')
 
-        self.components_type_combobox = ttk.Combobox(self.graph_sort_frame, width=10,
+        self.components_type_combobox = ttk.Combobox(self.graph_sort_frame, width=10,state='readonly',
                                                      values=['CPU', 'GPU', 'Motherboard', 'RAM',
                                                              'SSD', 'HDD'])
         self.components_type_combobox.pack(side='top', padx=5, pady=(0, 5), anchor='w')
@@ -338,7 +338,7 @@ class PCPartUI(tk.Tk):
         self.compare_topic_label = ttk.Label(self.graph_sort_frame, text='What to compare :')
         self.compare_topic_label.pack(side='top', padx=5, pady=(0, 5), anchor='w')
 
-        self.compare_combo = ttk.Combobox(self.graph_sort_frame, width=10, values=['None'])
+        self.compare_combo = ttk.Combobox(self.graph_sort_frame, width=10, values=['None'],state='readonly')
         self.compare_combo.pack(side='top', padx=5, pady=(0, 5), anchor='w')
 
         # Type of graph label and combobox
@@ -346,7 +346,7 @@ class PCPartUI(tk.Tk):
         self.graph_type_label.pack(side='top', padx=5, pady=(0, 5), anchor='w')
 
         self.graph_type_combo = ttk.Combobox(self.graph_sort_frame, width=10,
-                                             values=['Bar Chart'])
+                                             values=['Bar Chart'],state='readonly')
         self.graph_type_combo.pack(side='top', padx=5, pady=(0, 5), anchor='w')
 
         # Overall Comparison
@@ -390,20 +390,18 @@ class PCPartUI(tk.Tk):
         overall_comparison_checked = self.var.get()
         if overall_comparison_checked == 1:
             self.graph_type_combo['values'] = ['Histogram']
+            self.graph_type_combo['value'] = 'Histogram'
             self.graph_type_combo.config(state='readonly')
         else:
             self.graph_type_combo['values'] = ['Bar Chart']
+            self.graph_type_combo['value'] = 'Bar Chart'
+            self.price_range_entry1['value'] = ''
+            self.price_range_entry2['value'] = ''
             self.price_range_entry1.config(state='disabled')
             self.price_range_entry2.config(state='disabled')
 
     def plot_handler(self):
         try:
-            if self.product_listbox.size() == 0 and self.var.get() == 0:
-                messagebox.showerror("Error",
-                                     "Please select at least one product for comparison or "
-                                     "check overall comparison.")
-                return
-
             selected_graph_type = self.graph_type_combo.get()
 
             if self.graph is not None:
@@ -415,13 +413,25 @@ class PCPartUI(tk.Tk):
 
             if selected_graph_type == 'Histogram':
                 compare_attribute = self.compare_combo.get()
-                data_to_plot = data[compare_attribute]
+                price_range_min = self.price_range_entry1.get()
+                price_range_max = self.price_range_entry2.get()
+                if price_range_max <= price_range_min and self.var.get() == 1 and self.compare_combo.get() == 'Price':
+                    messagebox.showerror("Error", 'Maximum must be higher than minimum price.')
+                    return
+                if price_range_min and price_range_max:
+                    data_to_plot = data[(data[compare_attribute] >= int(price_range_min)) & (
+                                data[compare_attribute] <= int(price_range_max))]
+                    ax.hist(data_to_plot[compare_attribute], bins=5)
+                    ax.set_xlabel('Value')
+                    ax.set_ylabel('Frequency')
+                    ax.set_title('Histogram')
+                else:
+                    # Plot histogram based on all items in the data
+                    ax.hist(data[compare_attribute], bins=5)
+                    ax.set_xlabel('Value')
+                    ax.set_ylabel('Frequency')
+                    ax.set_title('Histogram')
 
-                # Plot histogram
-                ax.hist(data_to_plot, bins=5)
-                ax.set_xlabel('Value')
-                ax.set_ylabel('Frequency')
-                ax.set_title('Histogram')
             elif selected_graph_type == 'Bar Chart':
                 values = []
                 labels = self.product_listbox.get(0, tk.END)
@@ -437,10 +447,8 @@ class PCPartUI(tk.Tk):
 
             self.graph = FigureCanvasTkAgg(fig, master=self.graph_frame)
             self.graph.get_tk_widget().pack(fill='both', expand=True)
-        except Exception:
-            messagebox.showerror("Error",
-                                 "Please fill in all attribute")
-            return
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
     def search_items_select(self, event=None):
         search_query = self.search_entry_select.get().lower()
@@ -641,7 +649,7 @@ class PCPartUI(tk.Tk):
         hdd_SD_label.pack(side='top', anchor='w', padx=15)
         self.data_type_label = tk.Label(self.cpu_frame, text='Choose data type :')
         self.data_type_combo = ttk.Combobox(self.cpu_frame,
-                                            values=['CPU', 'RAM', 'SSD', 'HDD', 'GPU'])
+                                            values=['CPU', 'RAM', 'SSD', 'HDD', 'GPU'], state='readonly')
         self.data_type_combo.bind('<<ComboboxSelected>>', self.plot_correlation_graph)
         self.data_type_label.pack(side='top', anchor='w', pady=5)
         self.data_type_combo.pack(side='top', anchor='w', pady=5)
