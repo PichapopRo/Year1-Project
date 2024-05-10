@@ -15,12 +15,14 @@ class PCPartView(tk.Tk):
     """
     Program's UI
     """
+
     def __init__(self, controller):
         """
         Initialize the required variable
         :param controller: Controller
         """
         super().__init__()
+        self.reset_button = None
         self.data_type_combo = None
         self.second_page = None
         self.price_range_label = None
@@ -152,6 +154,10 @@ class PCPartView(tk.Tk):
                                        text='Build',
                                        width=10)
         self.build_button.pack(side='top', pady=10)
+        self.reset_button = ttk.Button(self.components_frame, command=self.controller.reset_handler,
+                                       text='reset',
+                                       width=10)
+        self.reset_button.pack(side='top', pady=10)
 
     def init_second_page(self):
         """
@@ -348,6 +354,7 @@ class PCPartController:
     """
     Program's Controller. Contains every function of the program
     """
+
     def __init__(self, model, view):
         """
         Initialize the required components to run the program
@@ -464,6 +471,19 @@ class PCPartController:
             else:
                 build_text.insert("end", f"{product_name}: {price} Baht - Product Page: N/A\n\n")
         build_text.config(state="disabled")
+
+    def reset_handler(self):
+        """
+        handler for reset button
+        """
+        self.total_price_value = 0
+        self.selected_components = {}
+        self.view.cpu_button['text'] = 'CPU'
+        self.view.mb_button['text'] = 'Motherboard'
+        self.view.gpu_button['text'] = 'GPU'
+        self.view.ram_button['text'] = 'RAM'
+        self.view.ssd_button['text'] = 'SSD'
+        self.view.hdd_button['text'] = 'HDD'
 
     def cpu_handler(self):
         """
