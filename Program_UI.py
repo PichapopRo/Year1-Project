@@ -1,4 +1,3 @@
-import seaborn as sns
 import tkinter as tk
 from tkinter import ttk, messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -7,7 +6,7 @@ import webbrowser
 from processing import *
 
 
-class UI(tk.Tk):
+class PCPartUI(tk.Tk):
     def __init__(self):
         super().__init__()
         self.graph = None
@@ -694,5 +693,3 @@ class UI(tk.Tk):
 
     def run(self):
         self.mainloop()
-
-

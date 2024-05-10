@@ -1,4 +1,4 @@
 from Program_UI import *
 
-Ui = UI()
+Ui = PCPartUI()
 Ui.run()
