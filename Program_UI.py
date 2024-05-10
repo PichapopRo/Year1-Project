@@ -12,7 +12,14 @@ class PCPartModel:
 
 
 class PCPartView(tk.Tk):
+    """
+    Program's UI
+    """
     def __init__(self, controller):
+        """
+        Initialize the required variable
+        :param controller: Controller
+        """
         super().__init__()
         self.data_type_combo = None
         self.second_page = None
@@ -43,6 +50,9 @@ class PCPartView(tk.Tk):
         self.init_components()
 
     def init_components(self):
+        """
+        Initial component for each page and other components that's require the program to run
+        """
         # Menu Bar
         menubar = tk.Menu(self)
         menubar.add_cascade(label="Exit", command=self.controller.exit_program)
@@ -60,6 +70,9 @@ class PCPartView(tk.Tk):
         self.init_third_page()
 
     def init_first_page(self):
+        """
+        Initial components for first page of the notebook (PC Building page)
+        """
         self.components_frame = ttk.Frame(self.first_page)
         self.components_frame.pack(side='left', fill='y', padx=20)
 
@@ -141,6 +154,9 @@ class PCPartView(tk.Tk):
         self.build_button.pack(side='top', pady=10)
 
     def init_second_page(self):
+        """
+        Initial components for second page of the notebook (Data exploration page)
+        """
         # Second Page
         self.second_page = ttk.Frame(self.notebook)
         self.notebook.add(self.second_page, text='Comparison')
@@ -232,6 +248,9 @@ class PCPartView(tk.Tk):
         self.price_range_entry2.config(state='disabled')
 
     def init_third_page(self):
+        """
+        Initial components for first page of the notebook
+        """
         # Third Page
         self.third_page = ttk.Frame(self.notebook)
         self.notebook.add(self.third_page, text='Descriptive Statistic and Correlation')
@@ -326,7 +345,13 @@ class PCPartView(tk.Tk):
 
 
 class PCPartController:
+    """
+    Program's Controller. Contains every function of the program
+    """
     def __init__(self, model, view):
+        """
+        Initialize the required components to run the program
+        """
         self.model = model
         self.view = view
         self.total_price_value = 0
@@ -341,9 +366,15 @@ class PCPartController:
         }
 
     def exit_program(self):
+        """
+        Exit program
+        """
         self.view.quit()
 
     def search_items(self, event=None):
+        """
+        Search method for the first page
+        """
         search_query = self.view.search_var.get().lower()
         if not search_query:
             return
@@ -360,6 +391,9 @@ class PCPartController:
             number += 1
 
     def filter_items(self, event=None):
+        """
+        This is method is for filter the item inside treeview by using price
+        """
         min_price = self.view.price_range1_entry1.get()
         max_price = self.view.price_range1_entry2.get()
         try:
@@ -395,6 +429,9 @@ class PCPartController:
             number += 1
 
     def build_handler(self):
+        """
+        The build button handler to show
+        """
         build_window = tk.Toplevel()
         build_window.title("Build Details")
 
@@ -429,6 +466,9 @@ class PCPartController:
         build_text.config(state="disabled")
 
     def cpu_handler(self):
+        """
+        Load data of CPU into the treeview
+        """
         self.view.product_tree.delete(*self.view.product_tree.get_children())
         number = 1
         for index, cpu in CPU_data.iterrows():
@@ -438,6 +478,9 @@ class PCPartController:
         self.selected_button = self.view.cpu_button
 
     def gpu_handler(self):
+        """
+        Load data of GPU into the treeview
+        """
         self.view.product_tree.delete(*self.view.product_tree.get_children())
         number = 1
         for index, gpu in gpu_data.iterrows():
@@ -447,6 +490,9 @@ class PCPartController:
         self.selected_button = self.view.gpu_button
 
     def mb_handler(self):
+        """
+        Load data of Motherboard into the treeview
+        """
         self.view.product_tree.delete(*self.view.product_tree.get_children())
         number = 1
         for index, mb in mb_data.iterrows():
@@ -456,6 +502,9 @@ class PCPartController:
         self.selected_button = self.view.mb_button
 
     def ssd_handler(self):
+        """
+        Load data of SSD into the treeview
+        """
         self.view.product_tree.delete(*self.view.product_tree.get_children())
         number = 1
         for index, ssd in ssd_data.iterrows():
@@ -465,6 +514,9 @@ class PCPartController:
         self.selected_button = self.view.ssd_button
 
     def hdd_handler(self):
+        """
+        Load data of HDD into the treeview
+        """
         self.view.product_tree.delete(*self.view.product_tree.get_children())
         number = 1
         for index, hdd in hdd_data.iterrows():
@@ -474,6 +526,9 @@ class PCPartController:
         self.selected_button = self.view.hdd_button
 
     def ram_handler(self):
+        """
+        Load data of RAM into the treeview
+        """
         self.view.product_tree.delete(*self.view.product_tree.get_children())
         number = 1
         for index, ram in ram_data.iterrows():
@@ -483,6 +538,9 @@ class PCPartController:
         self.selected_button = self.view.ram_button
 
     def on_item_select(self, event):
+        """
+        Handle treeview selection
+        """
         selected_item = self.view.product_tree.item(self.view.product_tree.selection())['values']
         if selected_item:
             name, price = selected_item
@@ -508,6 +566,9 @@ class PCPartController:
                 self.update_button(self.selected_button)
 
     def update_button(self, button, selected_item_name=None):
+        """
+        Change the button name into component's name
+        """
         if selected_item_name:
             self.selected_item_name = selected_item_name
             button.config(text=self.selected_item_name)
@@ -515,6 +576,9 @@ class PCPartController:
             button.config(text=button.cget('text').split(':')[0])
 
     def overall_checkbox_handler(self):
+        """
+        Overall component comparison checkbox handler
+        """
         overall_comparison_checked = self.view.var.get()
         if overall_comparison_checked == 1:
             self.view.graph_type_combo['values'] = ['Histogram']
@@ -529,6 +593,9 @@ class PCPartController:
             self.view.price_range_entry2.config(state='disabled')
 
     def plot_handler(self):
+        """
+        Plot button handler
+        """
         try:
             selected_graph_type = self.view.graph_type_combo.get()
 
@@ -581,6 +648,9 @@ class PCPartController:
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
     def search_items_select(self, event=None):
+        """
+        Search item on selection page
+        """
         search_query = self.view.search_entry_select.get().lower()
         if not search_query:
             return
@@ -596,6 +666,9 @@ class PCPartController:
             number += 1
 
     def select_handler(self):
+        """
+        selection button handler
+        """
         self.select_window = tk.Tk()
         self.select_type_label = tk.Label(self.select_window, text='Select Component')
         self.select_type_label.pack(side='top', expand=True)
@@ -619,6 +692,11 @@ class PCPartController:
         self.list_select.pack(fill='both', expand=True)
 
         def populate_treeview(selected_component):
+            """
+            Fill the treeview inside selection page
+            :param selected_component:
+            :return:
+            """
             self.list_select.delete(*self.list_select.get_children())  # Clear existing items
             number = 1
             if selected_component == 'GPU':
@@ -644,6 +722,11 @@ class PCPartController:
                 return
 
         def on_select(*args):
+            """
+            on item select handler
+            :param args:
+            :return:
+            """
             selected_component = self.view.components_type_combobox.get()
             populate_treeview(selected_component)
 
@@ -651,6 +734,11 @@ class PCPartController:
         self.search_entry_select.bind('<KeyRelease>', self.search_items_select)
 
         def add_to_select_handler(event):
+            """
+            add to listbox inside the main data story telling page
+            :param event:
+            :return:
+            """
             selected_item = self.list_select.item(self.list_select.selection())['values']
             if selected_item:
                 name = selected_item[0]
@@ -662,6 +750,9 @@ class PCPartController:
         self.done_button.pack(side='bottom', pady=10, expand=True)
 
     def price_range_compare_handler(self, *args):
+        """
+        Price range handler
+        """
         overall_comparison_checked = self.view.var.get()
         if overall_comparison_checked == 1 and self.view.compare_combo.get() == 'Price':
             self.view.price_range_entry1.config(state='normal')
@@ -671,9 +762,15 @@ class PCPartController:
             self.view.price_range_entry2.config(state='disable')
 
     def clear_handler(self):
+        """
+        Clear button handler
+        """
         self.view.product_listbox.delete(0, tk.END)
 
     def load_filter(self, *args):
+        """
+        Load filter
+        """
         selected_component = self.view.components_type_combobox.get()
         if selected_component == 'GPU':
             self.view.compare_combo['values'] = Component.GPU.value
@@ -689,6 +786,9 @@ class PCPartController:
             self.view.compare_combo['values'] = Component.HDD.value
 
     def data_search(self, data_type):
+        """
+        Data search for each data
+        """
         if data_type == 'GPU':
             return gpu_data
         elif data_type == 'CPU':
@@ -703,6 +803,9 @@ class PCPartController:
             return hdd_data
 
     def plot_correlation_graph(self, *args):
+        """
+        Plot correlation graph
+        """
 
         self.view.correlation_canvas.get_tk_widget().destroy()
 
@@ -742,4 +845,7 @@ class PCPartController:
         self.view.correlation_canvas.get_tk_widget().pack(side='top', fill='both', expand=True)
 
     def run(self):
+        """
+        run program
+        """
         self.view.mainloop()
