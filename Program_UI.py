@@ -14,6 +14,7 @@ class PCPartModel:
 class PCPartView(tk.Tk):
     def __init__(self, controller):
         super().__init__()
+        self.data_type_combo = None
         self.second_page = None
         self.price_range_label = None
         self.build_button = None
