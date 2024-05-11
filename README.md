@@ -49,7 +49,7 @@ cd Year1-Project
 4. Install all requirement packages in requirements.txt.
 
 ```commandline
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 
 5. Run main.py file
@@ -102,5 +102,5 @@ deactivate
 ```
 
 #### Demonstration video
-[demonstration video](https://drive.google.com/file/d/1QnpttBvbPjZhjk9pPkHIklXQS7k7VJ2U/view?usp=sharing)
+[](https://drive.google.com/file/d/1QnpttBvbPjZhjk9pPkHIklXQS7k7VJ2U/view?usp=sharing)
 
