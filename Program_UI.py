@@ -10,6 +10,9 @@ class PCPartModel:
     def __init__(self):
         self.selected_components = {}
 
+    def get_selected_component(self):
+        return self.selected_components
+
 
 class PCPartView(tk.Tk):
     """
@@ -690,6 +693,7 @@ class PCPartController:
         selection button handler
         """
         self.select_window = tk.Tk()
+        self.select_window.title('Selection')
         self.select_type_label = tk.Label(self.select_window, text='Select Component')
         self.select_type_label.pack(side='top', expand=True)
 
